@@ -135,3 +135,5 @@ int main()
 	    cout<<"\nEnter 1 to for another question and 0 to exit the program : ";
 	
 	    cin>>flag;
+        }
+}

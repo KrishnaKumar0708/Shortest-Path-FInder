@@ -1,95 +1,137 @@
 
-/*
-*******  SHORTEST PATH FINDER   *******
-
-*******  DIJKSTRA ALGORITHM      *******
-
-*/
-
-
-
-
-#include <iostream>
+#include<bits/stdc++.h>
 using namespace std;
-#include <limits.h>
- 
-#define V 6
- 
-//finding the vertex with minimum distance value
-//set of vertices not yet included in shortest path tree
-int minDist(int dist[], bool sptSet[])
+class Graph
 {
-   int min = INT_MAX, min_ind; // Initializing min value
- 
-    for (int v = 0; v < V; v++)
-        if (sptSet[v] == false && dist[v] <= min)
-            min = dist[v], min_ind = v;
-            return min_ind;
+    //used for adjacency list
+	unordered_map<string,vector<pair<string,int>>> g;
+	//for storing price for total journey
+	int p=0;
+    public:
+    void addEdge(string start,string end,int wt);
+    int ShortestPath(string dep,string des,unordered_map<string,vector<string>>*ans);
+    void Display();
+    int Price();
+};
+void Graph::addEdge(string start,string end,int w)
+{   
+	g[start].push_back(make_pair(end,w));
+	
+	g[end].push_back(make_pair(start,w));
 }
- 
-//functioning to print the constructed distance array
-void printSol(int dist[])
+class myComparator
 {
-    cout <<"Vertex   \t Distance from Source" << endl;
-    for (int i = 0; i < V; i++)
-        cout  << i << " \t\t"<<dist[i]<< endl;
-}
- 
-//Dijkstra's single source shortest path algorithm
-//a graph represented using adjacency matrix representation
-void Dijkstra(int graph[V][V], int source)
-{
-    int dist[V]; // The output array.  dist[i] will hold the shortest
-    // distance from src to i
- 
-    bool sptSet[V]; // sptSet[i] will be true if vertex i is included in shortest
-    // path tree or shortest distance from src to i is finalized
- 
-    // Initialize all distances as INFINITE and stpSet[] as false
-    for (int i = 0; i < V; i++)
-        dist[i] = INT_MAX, sptSet[i] = false;
- 
-    // Distance of source vertex from itself is always 0
-    dist[source] = 0;
- 
-    // Find shortest path for all vertices
-    for (int count = 0; count < V - 1; count++) {
-        // Pick the minimum distance vertex from the set of vertices not
-        // yet processed. u is always equal to src in the first iteration.
-        int u = minDist(dist, sptSet);
- 
-        // Mark the picked vertex as processed
-        sptSet[u] = true;
- 
-        // Update dist value of the adjacent vertices of the picked vertex.
-        for (int v = 0; v < V; v++)
- 
-            // Update dist[v] only if is not in sptSet, there is an edge from
-            // u to v, and total weight of path from src to  v through u is
-            // smaller than current value of dist[v]
-            if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX
-                && dist[u] + graph[u][v] < dist[v])
-                dist[v] = dist[u] + graph[u][v];
+public:
+    int operator() (pair<int,string> &p1,pair<int,string> &p2)
+    {
+        return p1.first > p2.first;
     }
- 
-    // print the constructed distance array
-    printSol(dist);
+};
+int Graph::ShortestPath(string dep,string des,unordered_map<string,vector<string>>*ans)
+{
+		string s=dep;
+		
+		unordered_map<string,int>distance;
+		
+		for(auto x:g)
+		distance[x.first]=INT_MAX;
+		
+		unordered_map<string,bool> visited;
+		
+		for(auto x:g)
+		visited[x.first]=false;
+		
+		distance[s]=0;
+		
+		priority_queue<pair<int,string>> q;
+		
+		q.push({0,s});
+		
+		while(!q.empty())
+		{
+			
+			string a=q.top().second;
+			
+			q.pop();
+			
+			if(visited[a])
+			continue;
+			
+			visited[a]=true;
+			
+			for(auto u:g[a])
+			{
+				string b=u.first;
+				int w=u.second;
+				
+				if(distance[a]+w<distance[b])
+				{
+					distance[b]=distance[a]+w;
+					q.push({-1*distance[b],b});  //make sure we want minheap
+                    (*ans)[b].clear();
+					for(auto x:(*ans)[a])
+                    (*ans)[b].push_back(x);
+                    (*ans)[b].push_back(a);
+				}
+			}
+			
+		}
+		
+		return p=distance[des];
 }
- 
+void Graph::Display()
+{
+	for(auto x:g)
+	cout<<x.first<<'\n';
+}
+
+int Graph::Price()
+{
+    float t=(float)p;
+	return (t/14)*120;                         //approximate diesel cost for entire journey
+}
 int main()
 {
-   
-    int graph[V][V] = {  
-        {0, 1, 2, 0, 0, 5},
-        {1, 0, 0, 5, 1, 0},
-        {2, 0, 0, 2, 3, 0},
-        {0, 5, 2, 0, 2, 2},
-        {0, 1, 3, 2, 0, 1},
-        {0, 0, 0, 2, 1, 0}
-        
-    };
- 
-    Dijkstra(graph, 0);
- 
-    return 0;
-}
+    Graph g;
+    cout<<"Please enter the data as shown below."<<endl;
+    cout<<"City1  City2  Distance between 2 cities(in km): "<<endl;
+	
+	cout<<"Enter 0 to finish"<<endl;
+    string city1,city2;
+    int w;
+    while(1)
+    {
+        cin>>city1;
+		if(city1=="0")
+		break;
+		cin>>city2>>w;	
+		g.addEdge(city1,city2,w);
+    }
+    int flag = 0;
+    while(flag==0)
+    {
+        unordered_map<string,vector<string>>ans;
+        cout<<"List of all cities is here:"<<endl;
+        g.Display();
+        cout<<"Please enter the departure city(please note that input is case sensitive): ";
+        string dep;
+        cin>>dep;
+        cout<<endl;
+        cout<<"Please enter the destination city: ";
+        string desti;
+        cin>>desti;
+        cout<<"\nMinimum distance between "<<dep<<" and "<<desti<<" :";
+	    cout<<g.ShortestPath(dep,desti,&ans);
+        cout<<"km"<<endl;
+        cout<<"-> The shortest path is below: "<<endl;
+        for(int i=0;i<ans[desti].size();i++)                                      //shows the shortest path
+        {
+            cout<<ans[desti][i]<<" "<<"->"<<" ";
+        }
+        cout<<desti<<endl;
+        cout<<"\nCost of travelling : "<<g.Price();
+        cout<<"rupees"<<endl;
+	
+	    cout<<"\nEnter 1 to for another question and 0 to exit the program : ";
+	
+	    cin>>flag;
